@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Panchita la Pandita — PandaIDORgame</title>
+<style>
+  :root{--panel: rgba(226, 155, 172, 0.9);}
+  html,body{height:100%;margin:0}
+  body{
+    font-family:system-ui,Segoe UI,Roboto,Arial;
+    color:#fff;
+    /* Fondo con la panda tierna (busca la imagen en la carpeta public) */
+    background: #111 url('pandita.jpeg') no-repeat center center fixed;
+    background-size: cover;
+    min-height:100vh;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+  }
+  .topbar{position:fixed; top:15px; left:15px; z-index:30; display:flex; gap:8px; align-items:center;}
+  .btn{border:0; border-radius:999px; padding:8px 14px; background:rgba(65,64,66,.9); color:#fff; font-weight:700; cursor: pointer;}
+  .btn:hover{background:rgba(146, 76, 122, 0.8)}
+  main{position:relative; display:flex; flex-direction:column; gap:12px; padding:20px; width:100%; max-width:420px;}
+  .panel{background:var(--panel); color:#222; border-radius:14px; padding:16px; width:100%; box-shadow:0 6px 18px rgba(0,0,0,.25);}
+  .panel h3, .panel h4 { margin-top: 0; color: #5a1222; }
+  .stack{display:flex; flex-direction:column; gap:8px}
+  select,input,button{ width:100%; padding:10px 12px; border-radius:10px; border:0; font-size:16px; box-sizing: border-box; }
+  input,select{color:#222; background: #fff;}
+  .btn-dark{background:#333; color:#fff; font-weight:800; cursor: pointer;}
+  .btn-dark:hover{background:#555}
+  #log{font-size:13px; color:#111; background:#ffe7f1; border-radius:10px; padding:8px; margin-top:6px; max-height:120px; overflow:auto;}
+  .log-success{background:#e8ffe8; color:#083; padding:6px 8px; border-radius:8px; margin-bottom:6px; font-weight:700}
+  .log-info{background:#fff7d6; color:#6a4a00; padding:6px 8px; border-radius:8px; margin-bottom:6px}
+  #flagBox{display:none; text-align:center; background:#e8ffe8; color:#103d10; border:2px dashed #6ccc6c; border-radius:14px; padding:12px; margin-top:8px; word-break: break-all;}
+  .mini-label{font-size:13px; color:#222; font-weight:700; margin-bottom:2px}
+  .overlay{position:fixed; inset:0; display:none; z-index:60; background:rgba(0,0,0,.75); align-items:center; justify-content:center; padding:20px;}
+  .overlay.open{display:flex}
+  .overlay-panel{background:#fff; color:#222; border-radius:12px; width:100%; max-width:600px; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,.6);}
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <button class="btn" id="btnEnunciado">ℹ Enunciado</button>
+    <button class="btn" id="btnReset">↺ Reiniciar</button>
+  </div>
+
+  <main>
+    <div class="panel">
+      <h3>Panchita la pandita</h3>
+      <div><strong>Usuario actual:</strong> <span id="userName">Panchita la pandita</span></div>
+      <div><strong>Mis recursos:</strong> <span id="myBamboo">100</span> 🎋</div>
+    </div>
+
+    <div class="panel">
+        <h4>Enviar Bamboo</h4>
+        <form id="transferForm" onsubmit="return false;">
+            <input type="hidden" name="from_id" value="pnd_usr_panchita_x99a">
+            <div class="stack">
+                <label class="mini-label" for="friendSelect">Enviar a:</label>
+                <select id="friendSelect" name="to_id">
+                  <option value="pnd_coco_uuid_88f2b1">CocoPandita</option>
+                  <option value="pnd_luli_uuid_33c9e4">LuliPandita</option>
+                  <option value="pnd_maxi_uuid_77a1d9">MaxiPandita</option>
+                  <option value="pnd_tito_uuid_55e8f2">TitoPandita</option>
+                  <option value="pnd_milo_uuid_11b4c7">MiloPandita</option>
+                  <option value="pnd_bubu_uuid_99c2e8">BubuPandita</option>
+                </select>
+                <label class="mini-label" for="amount">Cantidad de Bamboo:</label>
+                <input id="amount" name="amount" type="number" placeholder="Cantidad a enviar" />
+                <button class="btn-dark" id="btnSend">Enviar</button>
+                <div id="log" aria-live="polite"></div>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel">
+      <h4>Recursos de otras Pandaldeas</h4>
+      <ul id="friendsList" style="padding-left: 20px; margin: 0; color: #222;">
+        <li>CocoPandita tiene <span id="f1">70</span> 🎋</li>
+        <li>LuliPandita tiene <span id="f2">60</span> 🎋</li>
+        <li>MaxiPandita tiene <span id="f3">50</span> 🎋</li>
+        <li>TitoPandita tiene <span id="f4">40</span> 🎋</li>
+        <li>MiloPandita tiene <span id="f5">30</span> 🎋</li>
+        <li>BubuPandita tiene <span id="f6">20</span> 🎋</li>
+      </ul>
+    </div>
+
+    <div id="flagBox" class="panel">
+      <h3>🎉 ¡Misión Cumplida! 🎉</h3>
+      <p>Lograste conseguir todo el bambú para Panchita.</p>
+      <p><strong>Flag:</strong></p>
+      <strong id="flag" style="font-family: monospace; font-size: 1.1em; color: #083;"></strong>
+    </div>
+  </main>
+
+  <div class="overlay" id="modalEnunciado">
+    <div class="overlay-panel">
+      <h3>Enunciado del Desafío</h3>
+      <p>En este juego, <strong>Panchita la pandita</strong> necesita reunir <strong>280 de bambú</strong> para mejorar su Pandaldea.</p>
+      <p>Explora el sistema de transferencias entre las distintas Pandaldeas de la comunidad para encontrar vulnerabilidades y alcanzar la meta.</p>
+      <button class="btn btn-dark" id="closeEnunciado" style="margin-top:10px;">Cerrar</button>
+    </div>
+  </div>
+
+<script>
+const logDiv = document.getElementById('log');
+
+async function loadState() {
+    try {
+        const res = await fetch('/api/state');
+        const data = await res.json();
+        updateUI(data.players);
+        if (data.won) {
+            document.getElementById('flagBox').style.display = 'block';
+            document.getElementById('flag').textContent = data.flag;
+        } else {
+            document.getElementById('flagBox').style.display = 'none';
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function updateUI(players) {
+    document.getElementById('myBamboo').textContent = players["pnd_usr_panchita_x99a"].bamboo;
+    document.getElementById('f1').textContent = players["pnd_coco_uuid_88f2b1"].bamboo;
+    document.getElementById('f2').textContent = players["pnd_luli_uuid_33c9e4"].bamboo;
+    document.getElementById('f3').textContent = players["pnd_maxi_uuid_77a1d9"].bamboo;
+    document.getElementById('f4').textContent = players["pnd_tito_uuid_55e8f2"].bamboo;
+    document.getElementById('f5').textContent = players["pnd_milo_uuid_11b4c7"].bamboo;
+    document.getElementById('f6').textContent = players["pnd_bubu_uuid_99c2e8"].bamboo;
+}
+
+function appendLogSuccess(text){
+    const d = document.createElement('div'); d.className='log-success'; d.textContent = text; logDiv.prepend(d);
+}
+function appendLogInfo(text){
+    const d = document.createElement('div'); d.className='log-info'; d.textContent = text; logDiv.prepend(d);
+}
+
+document.getElementById('btnSend').addEventListener('click', async () => {
+    const from_id = document.querySelector('input[name="from_id"]').value;
+    const to_id = document.getElementById('friendSelect').value;
+    const amount = document.getElementById('amount').value;
+
+    try {
+        const res = await fetch('/api/transfer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from_id, to_id, amount: parseInt(amount) })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            appendLogSuccess(data.message);
+            updateUI(data.players);
+            if (data.won) {
+                document.getElementById('flagBox').style.display = 'block';
+                document.getElementById('flag').textContent = data.flag;
+            }
+        } else {
+            appendLogInfo(`❌ ${data.message}`);
+        }
+    } catch (e) {
+        appendLogInfo("❌ Error de red.");
+    }
+});
+
+document.getElementById('btnReset').addEventListener('click', async () => {
+    await fetch('/api/reset', { method: 'POST' });
+    logDiv.innerHTML = '';
+    loadState();
+    appendLogInfo("🔄 Juego reiniciado.");
+});
+
+document.getElementById('btnEnunciado').addEventListener('click', () => {
+    document.getElementById('modalEnunciado').classList.add('open');
+});
+document.getElementById('closeEnunciado').addEventListener('click', () => {
+    document.getElementById('modalEnunciado').classList.remove('open');
+});
+
+loadState();
+</script>
+</body>
+</html>
