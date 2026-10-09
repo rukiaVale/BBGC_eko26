@@ -25,7 +25,7 @@ function resetGameState() {
 resetGameState();
 
 const secretFlag = "427567426f756e74794769726c73436c7562";
-// 👉 PON TU LINK DE GOOGLE FORMS AQUÍ:
+
 const raffleUrl = "https://forms.gle/8kHtUMfkRqeScoPz6"; 
 
 app.get('/api/state', (req, res) => {
